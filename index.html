@@ -210,7 +210,7 @@
   import {
     initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
     doc, collection, setDoc, getDoc, getDocs, deleteDoc, updateDoc, deleteField,
-    onSnapshot, serverTimestamp, writeBatch, query, orderBy
+    onSnapshot, serverTimestamp, writeBatch
   } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
   const app = initializeApp(firebaseConfig);
@@ -563,9 +563,10 @@
   // ================= POIDS =================
   function attachWeightListeners(){
     const uid = currentUser.uid;
-    const q = query(weightCollRef(uid), orderBy('date'));
-    const unsub1 = onSnapshot(q, (snap)=>{
-      state.weightEntries = snap.docs.map(d=>({date:d.id, weight:d.data().weight}));
+    const unsub1 = onSnapshot(weightCollRef(uid), (snap)=>{
+      state.weightEntries = snap.docs
+        .map(d=>({date:d.id, weight:d.data().weight}))
+        .sort((a,b)=>a.date.localeCompare(b.date));
       renderWeightPanel();
     }, (err)=>{ console.error(err); showToast('Erreur de synchronisation (poids).'); });
     const unsub2 = onSnapshot(goalRef(uid), (snap)=>{
