@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Carnet de bord</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2B2E28">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -768,10 +773,35 @@
     }catch(e){ console.error(e); showToast("Export impossible pour le moment."); }
   }
 
+  function convertLegacyBundle(bundle){
+    // Reconnaît le format exporté par l'ancienne version (localStorage, clés "carnetdebord_...")
+    // et le convertit vers le format attendu par l'import actuel.
+    const keys = Object.keys(bundle);
+    const isLegacy = keys.some(k=>k.startsWith('carnetdebord_'));
+    if(!isLegacy) return bundle;
+    const converted = { sportMonths:{}, mealMonths:{}, weightEntries:{}, goal:null };
+    keys.forEach(k=>{
+      let val;
+      try{ val = typeof bundle[k]==='string' ? JSON.parse(bundle[k]) : bundle[k]; }
+      catch(e){ return; }
+      if(k.startsWith('carnetdebord_sport:')){
+        converted.sportMonths[k.split('carnetdebord_sport:')[1]] = val;
+      } else if(k.startsWith('carnetdebord_meals:')){
+        converted.mealMonths[k.split('carnetdebord_meals:')[1]] = val;
+      } else if(k==='carnetdebord_weight:goal'){
+        converted.goal = val.goal;
+      } else if(k==='carnetdebord_weight:entries'){
+        (val||[]).forEach(e=>{ converted.weightEntries[e.date] = {weight:e.weight}; });
+      }
+    });
+    return converted;
+  }
+
   async function importBackupFile(file){
     try{
       const text = await file.text();
-      const bundle = JSON.parse(text);
+      let bundle = JSON.parse(text);
+      bundle = convertLegacyBundle(bundle);
       const uid = currentUser.uid;
       const batch = writeBatch(db);
       Object.entries(bundle.sportMonths||{}).forEach(([mk,data])=>{
