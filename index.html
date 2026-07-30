@@ -188,18 +188,18 @@
   // (voir le guide de configuration fourni à côté de ce fichier)
   // ============================================================
   const firebaseConfig = {
-  apiKey: "AIzaSyAgHxS0XECg_bCOOOa38xbPKFKV0rqZHKg",
-  authDomain: "carnet-de-bord-95a4c.firebaseapp.com",
-  projectId: "carnet-de-bord-95a4c",
-  storageBucket: "carnet-de-bord-95a4c.firebasestorage.app",
-  messagingSenderId: "1079448740104",
-  appId: "1:1079448740104:web:3d0f357fffe4f762d88cbd"
-};
+    apiKey: "AIzaSyAgHxS0XECg_bCOOOa38xbPKFKV0rqZHKg",
+    authDomain: "carnet-de-bord-95a4c.firebaseapp.com",
+    projectId: "carnet-de-bord-95a4c",
+    storageBucket: "carnet-de-bord-95a4c.firebasestorage.app",
+    messagingSenderId: "1079448740104",
+    appId: "1:1079448740104:web:3d0f357fffe4f762d88cbd"
+  };
   // ============================================================
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
   import {
-    getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult,
+    getAuth, GoogleAuthProvider, signInWithPopup,
     onAuthStateChanged, signOut
   } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
   import {
@@ -821,15 +821,13 @@
 
   // ================= AUTH =================
   document.getElementById('signInBtn').addEventListener('click', ()=>{
-    signInWithRedirect(auth, provider).catch(e=>{ console.error(e); showToast("Connexion impossible : "+e.code); });
+    signInWithPopup(auth, provider).catch(e=>{ console.error(e); showToast("Connexion impossible : "+e.code); });
   });
   document.getElementById('signOutBtn').addEventListener('click', async ()=>{
     const email = currentUser ? currentUser.email : '';
     if(!confirm(`Se déconnecter de ${email} ?\n\nSi tu te reconnectes avec un autre compte Google, tu verras les données de cet autre compte. Les données de "${email}" resteront intactes et t'attendront à ta prochaine connexion avec ce compte.`)) return;
     await signOut(auth);
   });
-
-  getRedirectResult(auth).catch(e=>{ console.error(e); showToast("Connexion impossible : "+e.code); });
 
   onAuthStateChanged(auth, (user)=>{
     detachAll();
