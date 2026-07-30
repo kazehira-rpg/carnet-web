@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Carnet de bord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF0E8;
+    --paper:#FBFAF6;
+    --ink:#2B2E28;
+    --ink-soft:#6B7166;
+    --line:#DAD6C9;
+    --sport:#5B7B5B;
+    --repas:#C98A3B;
+    --repas-soft:#F3E3C7;
+    --poids:#4F6E8C;
+    --poids-soft:#DCE5EC;
+    --good:#6E9B6E;
+    --mid:#D4A63A;
+    --bad:#C1614F;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(43,46,40,0.07), 0 4px 12px rgba(43,46,40,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:24px;}
+  header.top{padding:22px 20px 4px;}
+  h1.brand{font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:600;font-size:28px;margin:0 0 2px;letter-spacing:-0.01em;}
+  .brand-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-soft);}
+
+  .conn-badge{display:inline-block;font-size:10.5px;font-family:'IBM Plex Mono',monospace;padding:3px 9px;border-radius:10px;margin-top:9px;}
+  .conn-badge.online{background:#DCE6D9;color:#3F5A3F;}
+  .conn-badge.offline{background:#F7EBC9;color:#8A5A17;}
+
+  .account-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .account-email{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px 10px;}
+  .account-btn{font-size:11px;color:var(--ink-soft);background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px 10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;}
+
+  .auth-gate{padding:56px 28px;text-align:center;}
+  .auth-copy{color:var(--ink-soft);font-size:14px;line-height:1.6;margin:0 auto 22px;max-width:300px;}
+
+  .tabs{display:flex;gap:4px;padding:18px 16px 0;}
+  .tab-btn{
+    flex:1;border:none;background:transparent;padding:10px 4px 12px;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;color:var(--ink-soft);
+    border-top:3px solid transparent;border-radius:8px 8px 0 0;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+  }
+  .tab-btn .emoji{font-size:17px;}
+  .tab-btn.active{background:var(--paper);color:var(--ink);}
+  .tab-btn[data-tab="sport"].active{border-top-color:var(--sport);}
+  .tab-btn[data-tab="repas"].active{border-top-color:var(--repas);}
+  .tab-btn[data-tab="poids"].active{border-top-color:var(--poids);}
+
+  main{padding:0 16px;}
+  .panel-wrap{background:var(--paper);border-radius:0 10px 10px 10px;box-shadow:var(--shadow);padding:18px;}
+
+  label.small{
+    font-size:10.5px;color:var(--ink-soft);display:block;margin-bottom:4px;
+    font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.05em;
+  }
+  .field-row{display:flex;gap:8px;margin-bottom:10px;}
+  .field{flex:1;min-width:0;}
+  input,select{
+    font-family:'Inter',sans-serif;font-size:15px;padding:9px 10px;
+    border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);width:100%;
+  }
+  input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:1px;}
+  button{font-family:'Inter',sans-serif;}
+  button.primary{
+    border:none;padding:11px 16px;border-radius:8px;font-weight:700;font-size:14px;
+    cursor:pointer;color:#fff;width:100%;
+  }
+  button.primary.sport{background:var(--sport);}
+  button.primary.repas{background:var(--repas);}
+  button.primary.poids{background:var(--poids);}
+
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;}
+  .cal-head .month-label{font-family:'Fraunces',serif;font-weight:600;font-size:16px;text-transform:capitalize;}
+  .cal-nav{background:#fff;border:1px solid var(--line);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px;color:var(--ink);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-dow{font-size:10px;text-align:center;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;padding-bottom:3px;}
+  .cal-cell{
+    aspect-ratio:1;border-radius:6px;border:1px dashed var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer;position:relative;
+    background:var(--bg);color:var(--ink-soft);
+  }
+  .cal-cell.empty{visibility:hidden;cursor:default;}
+  .cal-cell.today{outline:1.5px solid var(--ink);outline-offset:-1.5px;}
+  .cal-cell.selected{box-shadow:0 0 0 2px var(--ink) inset;}
+  .cal-cell .dot{width:6px;height:6px;border-radius:50%;margin-top:2px;}
+  .cal-cell.has-sport{background:var(--sport);color:#fff;border-color:transparent;font-weight:700;}
+  .cal-cell.rate-green{background:var(--good);border-color:transparent;color:#fff;font-weight:700;}
+  .cal-cell.rate-yellow{background:var(--mid);border-color:transparent;color:var(--ink);font-weight:700;}
+  .cal-cell.rate-red{background:var(--bad);border-color:transparent;color:#fff;font-weight:700;}
+
+  .day-list{margin-top:16px;border-top:1px solid var(--line);padding-top:10px;}
+  .entry-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;}
+  .entry-row:last-child{border-bottom:none;}
+  .entry-meta{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:12px;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .empty-note{color:var(--ink-soft);font-size:13px;margin:4px 0;}
+  .del-btn{background:none;border:none;color:#B4483A;font-size:15px;cursor:pointer;padding:2px 4px;line-height:1;}
+
+  .rate-row{display:flex;gap:8px;margin:10px 0 4px;}
+  .rate-btn{flex:1;padding:10px;border-radius:8px;border:2px solid var(--line);background:#fff;font-size:20px;cursor:pointer;line-height:1;}
+  .rate-btn.active{border-color:var(--ink);}
+
+  .stat-highlight{display:flex;gap:12px;margin:14px 0 4px;}
+  .stat-box{flex:1;background:var(--poids-soft);border-radius:8px;padding:10px 12px;}
+  .stat-box .num{font-family:'Fraunces',serif;font-size:20px;font-weight:600;}
+  .stat-box .lbl{font-size:10px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.03em;}
+
+  .period-row{display:flex;gap:6px;margin:14px 0 10px;}
+  .period-btn{flex:1;padding:6px 2px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;color:var(--ink);}
+  .period-btn.active{background:var(--poids);color:#fff;border-color:var(--poids);}
+
+  .range-row{display:flex;gap:8px;align-items:end;margin:12px 0 6px;}
+
+  .backup-row{display:flex;gap:8px;margin:22px 16px 4px;flex-wrap:wrap;justify-content:center;}
+  .backup-btn{
+    font-size:11px;color:var(--ink-soft);background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:5px 11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;
+    display:inline-block;
+  }
+
+  .toast{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:8px 16px;border-radius:20px;
+    font-size:12.5px;z-index:50;box-shadow:var(--shadow);max-width:85%;text-align:center;
+  }
+
+  .cal-cell,.tab-btn,.rate-btn,.period-btn,button{transition:background-color .15s ease,border-color .15s ease;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important;} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1 class="brand">Carnet de bord</h1>
+    <div class="brand-sub">Sport · Repas · Poids</div>
+    <br>
+    <span id="connStatus" class="conn-badge online">🟢 En ligne</span>
+    <div id="accountRow" class="account-row" style="display:none;">
+      <span id="accountEmail" class="account-email"></span>
+      <button type="button" id="signOutBtn" class="account-btn">Se déconnecter</button>
+    </div>
+  </header>
+
+  <div id="authGate" class="auth-gate">
+    <p class="auth-copy">Connecte-toi avec ton compte Google pour retrouver ton carnet — tes données sont sauvegardées en ligne et ne dépendent plus de ce seul téléphone.</p>
+    <button type="button" id="signInBtn" class="primary poids" style="width:auto;padding:12px 22px;">Se connecter avec Google</button>
+  </div>
+
+  <nav class="tabs" id="tabsNav" style="display:none;">
+    <button class="tab-btn active" data-tab="sport"><span class="emoji">🏃</span>Sport</button>
+    <button class="tab-btn" data-tab="repas"><span class="emoji">🍽️</span>Repas</button>
+    <button class="tab-btn" data-tab="poids"><span class="emoji">⚖️</span>Poids</button>
+  </nav>
+
+  <main id="mainArea" style="display:none;">
+    <section class="panel-wrap" id="panel-sport"></section>
+    <section class="panel-wrap" id="panel-repas" style="display:none;"></section>
+    <section class="panel-wrap" id="panel-poids" style="display:none;"></section>
+  </main>
+
+  <footer class="backup-row" id="backupRow" style="display:none;">
+    <button type="button" id="exportBtn" class="backup-btn">⬇️ Exporter une sauvegarde</button>
+    <label for="importFile" class="backup-btn">⬆️ Importer une sauvegarde</label>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  </footer>
+</div>
+
+<script type="module">
+  // ============================================================
+  // CONFIGURATION FIREBASE — à remplacer avant de mettre en ligne
+  // (voir le guide de configuration fourni à côté de ce fichier)
+  // ============================================================
+  const firebaseConfig = {
+  apiKey: "AIzaSyAgHxS0XECg_bCOOOa38xbPKFKV0rqZHKg",
+  authDomain: "carnet-de-bord-95a4c.firebaseapp.com",
+  projectId: "carnet-de-bord-95a4c",
+  storageBucket: "carnet-de-bord-95a4c.firebasestorage.app",
+  messagingSenderId: "1079448740104",
+  appId: "1:1079448740104:web:3d0f357fffe4f762d88cbd"
+};
+  // ============================================================
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult,
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+  import {
+    initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+    doc, collection, setDoc, getDoc, getDocs, deleteDoc, updateDoc, deleteField,
+    onSnapshot, serverTimestamp, writeBatch, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
+  const db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+
+  let currentUser = null;
+  let activeUnsubs = [];
+
+  const MONTHS_FULL = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const DAY_NAMES = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const MONTHS_LOWER = MONTHS_FULL.map(m=>m.toLowerCase());
+  const DOW_LETTERS = ['L','M','M','J','V','S','D'];
+  const COLORS = { poids:'#4F6E8C', inkSoft:'#6B7166', line:'#DAD6C9' };
+  const SPORT_OPTIONS = ['Danse country','Vélo elliptique','Course à pied','Marche active','MC Studio'];
+  const PERIODS = [['1m','1 mois',1],['3m','3 mois',3],['6m','6 mois',6],['1a','1 an',12],['tout','Tout',null]];
+
+  const state = {
+    sportCursor: startOfMonth(new Date()),
+    mealCursor: startOfMonth(new Date()),
+    selectedSportDate: fmtDate(new Date()),
+    selectedMealDate: fmtDate(new Date()),
+    weightPeriod: 'tout',
+    weightRange: null,
+    sportMonthData: {},
+    mealMonthData: {},
+    weightEntries: [],
+    weightGoal: null
+  };
+
+  // ---------- helpers ----------
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function fmtDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+  function fmtMonthKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+  function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+  function addMonths(d,n){ return new Date(d.getFullYear(), d.getMonth()+n, 1); }
+  function fmtDateTimeLocal(d){ return `${fmtDate(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+  function fmtDateHuman(s){ const d=new Date(s+'T00:00:00'); return `${DAY_NAMES[d.getDay()]} ${d.getDate()} ${MONTHS_LOWER[d.getMonth()]} ${d.getFullYear()}`; }
+  function fmtDateShort(s){ const p=s.split('-'); return `${p[2]}/${p[1]}/${p[0].slice(2)}`; }
+  function monthLabel(cursor){ return `${MONTHS_FULL[cursor.getMonth()]} ${cursor.getFullYear()}`; }
+  function firstWeekdayMon0(y,m){ const wd=new Date(y,m,1).getDay(); return (wd+6)%7; }
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function showToast(msg){
+    const t=document.createElement('div');
+    t.className='toast';
+    t.textContent=msg;
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(),3200);
+  }
+  function firstOfMonthStr(cursor){ return `${cursor.getFullYear()}-${pad2(cursor.getMonth()+1)}-01`; }
+
+  // ---------- connectivity badge ----------
+  function updateConnBadge(){
+    const el = document.getElementById('connStatus');
+    if(navigator.onLine){ el.textContent='🟢 En ligne'; el.className='conn-badge online'; }
+    else { el.textContent='🟠 Hors ligne — sera synchronisé au retour du réseau'; el.className='conn-badge offline'; }
+  }
+  window.addEventListener('online', updateConnBadge);
+  window.addEventListener('offline', updateConnBadge);
+  updateConnBadge();
+
+  // ---------- Firestore path helpers ----------
+  function sportMonthRef(uid, mk){ return doc(db, 'users', uid, 'sportMonths', mk); }
+  function mealMonthRef(uid, mk){ return doc(db, 'users', uid, 'mealMonths', mk); }
+  function weightEntryRef(uid, dateStr){ return doc(db, 'users', uid, 'weightEntries', dateStr); }
+  function weightCollRef(uid){ return collection(db, 'users', uid, 'weightEntries'); }
+  function goalRef(uid){ return doc(db, 'users', uid, 'settings', 'goal'); }
+
+  // ---------- calendar builder (shared by sport & repas) ----------
+  function dowHeaderHTML(){ return DOW_LETTERS.map(d=>`<div class="cal-dow">${d}</div>`).join(''); }
+  function buildCalendarCells(cursor, monthData, type, selectedDate){
+    const y=cursor.getFullYear(), m=cursor.getMonth();
+    const nDays = new Date(y,m+1,0).getDate();
+    const lead = firstWeekdayMon0(y,m);
+    const todayStr = fmtDate(new Date());
+    let html='';
+    for(let i=0;i<lead;i++) html += '<div class="cal-cell empty"></div>';
+    for(let d=1; d<=nDays; d++){
+      const dd = pad2(d);
+      const dateStr = `${y}-${pad2(m+1)}-${dd}`;
+      let cls='cal-cell';
+      if(dateStr===todayStr) cls+=' today';
+      if(dateStr===selectedDate) cls+=' selected';
+      let extra='';
+      if(type==='sport'){
+        const entries = monthData[dd];
+        if(entries && entries.length) cls+=' has-sport';
+      } else if(type==='meal'){
+        const dayObj = monthData[dd];
+        if(dayObj && dayObj.rating) cls+=' rate-'+dayObj.rating;
+        else if(dayObj && dayObj.entries && dayObj.entries.length) extra=`<span class="dot" style="background:${COLORS.inkSoft}"></span>`;
+      }
+      html += `<div class="${cls}" data-date="${dateStr}">${d}${extra}</div>`;
+    }
+    const total = lead+nDays;
+    const trail = (7 - (total%7))%7;
+    for(let i=0;i<trail;i++) html += '<div class="cal-cell empty"></div>';
+    return html;
+  }
+
+  // ================= SPORT =================
+  function attachSportListener(){
+    const uid = currentUser.uid;
+    const mk = fmtMonthKey(state.sportCursor);
+    const unsub = onSnapshot(sportMonthRef(uid, mk), (snap)=>{
+      state.sportMonthData = snap.exists() ? snap.data() : {};
+      renderSportPanel();
+    }, (err)=>{ console.error(err); showToast('Erreur de synchronisation (sport).'); });
+    activeUnsubs.push(unsub);
+  }
+
+  function renderSportPanel(){
+    const container = document.getElementById('panel-sport');
+    const monthData = state.sportMonthData;
+    const selDate = state.selectedSportDate;
+    const dayKey = selDate.slice(8,10);
+    const dayEntries = monthData[dayKey] || [];
+    const totalMin = dayEntries.reduce((s,e)=>s+Number(e.duration||0),0);
+
+    container.innerHTML = `
+      <form id="sportForm">
+        <div class="field-row">
+          <div class="field"><label class="small">Date</label><input type="date" id="sportDate" value="${selDate}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="small">Activité</label>
+            <select id="sportType">
+              ${SPORT_OPTIONS.map(o=>`<option value="${o}">${o}</option>`).join('')}
+              <option value="__autre">Autre</option>
+            </select>
+          </div>
+          <div class="field"><label class="small">Durée (min)</label><input type="number" id="sportDuration" min="1" step="1" placeholder="30" required></div>
+        </div>
+        <div class="field-row" id="sportCustomRow" style="display:none;">
+          <div class="field"><label class="small">Précise l'activité</label><input type="text" id="sportCustom" placeholder="Ex: Danse"></div>
+        </div>
+        <button type="submit" class="primary sport">Ajouter la séance</button>
+      </form>
+
+      <div class="cal-head">
+        <button type="button" class="cal-nav" id="sportPrev" aria-label="Mois précédent">‹</button>
+        <span class="month-label">${monthLabel(state.sportCursor)}</span>
+        <button type="button" class="cal-nav" id="sportNext" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="cal-grid" id="sportGrid">
+        ${dowHeaderHTML()}
+        ${buildCalendarCells(state.sportCursor, monthData, 'sport', selDate)}
+      </div>
+
+      <div class="day-list">
+        <label class="small">${fmtDateHuman(selDate)}${totalMin? ' · '+totalMin+' min au total':''}</label>
+        ${dayEntries.length ? dayEntries.map((e,i)=>`
+          <div class="entry-row">
+            <span>${escapeHtml(e.type)}</span>
+            <span class="entry-meta">${e.duration} min <button class="del-btn" data-idx="${i}" aria-label="Supprimer">✕</button></span>
+          </div>`).join('') : '<p class="empty-note">Aucune séance ce jour-là.</p>'}
+      </div>
+    `;
+
+    const typeSel = container.querySelector('#sportType');
+    typeSel.addEventListener('change', ()=>{
+      container.querySelector('#sportCustomRow').style.display = typeSel.value==='__autre' ? 'flex' : 'none';
+    });
+
+    container.querySelector('#sportForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const date = container.querySelector('#sportDate').value || selDate;
+      let type = typeSel.value;
+      if(type==='__autre'){ type = container.querySelector('#sportCustom').value.trim() || 'Autre'; }
+      const duration = Number(container.querySelector('#sportDuration').value);
+      if(!duration || duration<=0) return;
+      const mk = date.slice(0,7), dk = date.slice(8,10);
+      const uid = currentUser.uid;
+      try{
+        const sameMonth = mk===fmtMonthKey(state.sportCursor);
+        const base = sameMonth ? (state.sportMonthData[dk] || []) : (await getDoc(sportMonthRef(uid,mk))).data()?.[dk] || [];
+        const updated = base.concat([{type, duration}]);
+        await setDoc(sportMonthRef(uid, mk), { [dk]: updated }, { merge:true });
+      }catch(e){ console.error(e); showToast('Sauvegarde impossible pour le moment.'); }
+      state.selectedSportDate = date;
+      if(!sameMonthCursor(state.sportCursor, date)){
+        state.sportCursor = new Date(Number(date.slice(0,4)), Number(date.slice(5,7))-1, 1);
+        reattach('sport');
+      }
+    });
+
+    container.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('Supprimer cette séance ?')) return;
+        const idx = Number(btn.dataset.idx);
+        const uid = currentUser.uid;
+        const mk = fmtMonthKey(state.sportCursor);
+        const arr = (state.sportMonthData[dayKey]||[]).slice();
+        arr.splice(idx,1);
+        try{
+          if(arr.length===0){
+            await updateDoc(sportMonthRef(uid, mk), { [dayKey]: deleteField() }).catch(async ()=>{
+              await setDoc(sportMonthRef(uid, mk), { [dayKey]: [] }, { merge:true });
+            });
+          } else {
+            await setDoc(sportMonthRef(uid, mk), { [dayKey]: arr }, { merge:true });
+          }
+        }catch(e){ console.error(e); showToast('Suppression impossible pour le moment.'); }
+      });
+    });
+
+    container.querySelector('#sportPrev').addEventListener('click', ()=>{ navigateSportMonth(-1); });
+    container.querySelector('#sportNext').addEventListener('click', ()=>{ navigateSportMonth(1); });
+    container.querySelector('#sportGrid').addEventListener('click', (e)=>{
+      const cell = e.target.closest('.cal-cell[data-date]');
+      if(!cell) return;
+      state.selectedSportDate = cell.dataset.date;
+      renderSportPanel();
+    });
+  }
+
+  function sameMonthCursor(cursor, dateStr){ return fmtMonthKey(cursor)===dateStr.slice(0,7); }
+  function navigateSportMonth(delta){
+    state.sportCursor = addMonths(state.sportCursor, delta);
+    state.selectedSportDate = firstOfMonthStr(state.sportCursor);
+    reattach('sport');
+  }
+
+  // ================= REPAS =================
+  function attachMealListener(){
+    const uid = currentUser.uid;
+    const mk = fmtMonthKey(state.mealCursor);
+    const unsub = onSnapshot(mealMonthRef(uid, mk), (snap)=>{
+      state.mealMonthData = snap.exists() ? snap.data() : {};
+      renderMealPanel();
+    }, (err)=>{ console.error(err); showToast('Erreur de synchronisation (repas).'); });
+    activeUnsubs.push(unsub);
+  }
+
+  function renderMealPanel(){
+    const container = document.getElementById('panel-repas');
+    const monthData = state.mealMonthData;
+    const selDate = state.selectedMealDate;
+    const dayKey = selDate.slice(8,10);
+    const dayObj = monthData[dayKey] || {entries:[], rating:null};
+    const dayEntries = (dayObj.entries||[]).slice().sort((a,b)=>a.time.localeCompare(b.time));
+
+    container.innerHTML = `
+      <form id="mealForm">
+        <div class="field-row">
+          <div class="field"><label class="small">Plat</label><input type="text" id="mealName" placeholder="Ex: Salade de quinoa" required></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="small">Horaire</label><input type="datetime-local" id="mealTime" value="${fmtDateTimeLocal(new Date())}"></div>
+        </div>
+        <button type="submit" class="primary repas">Ajouter le repas</button>
+      </form>
+
+      <label class="small" style="display:block;margin-top:16px;">Qualité de la journée</label>
+      <div class="rate-row">
+        <button type="button" class="rate-btn ${dayObj.rating==='green'?'active':''}" data-rate="green" aria-label="Bonne journée">🟢</button>
+        <button type="button" class="rate-btn ${dayObj.rating==='yellow'?'active':''}" data-rate="yellow" aria-label="Journée moyenne">🟡</button>
+        <button type="button" class="rate-btn ${dayObj.rating==='red'?'active':''}" data-rate="red" aria-label="Journée difficile">🔴</button>
+      </div>
+
+      <div class="cal-head">
+        <button type="button" class="cal-nav" id="mealPrev" aria-label="Mois précédent">‹</button>
+        <span class="month-label">${monthLabel(state.mealCursor)}</span>
+        <button type="button" class="cal-nav" id="mealNext" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="cal-grid" id="mealGrid">
+        ${dowHeaderHTML()}
+        ${buildCalendarCells(state.mealCursor, monthData, 'meal', selDate)}
+      </div>
+
+      <div class="day-list">
+        <label class="small">${fmtDateHuman(selDate)}</label>
+        ${dayEntries.length ? dayEntries.map((e,i)=>`
+          <div class="entry-row">
+            <span>${escapeHtml(e.name)}</span>
+            <span class="entry-meta">${e.time} <button class="del-btn" data-idx="${i}" aria-label="Supprimer">✕</button></span>
+          </div>`).join('') : '<p class="empty-note">Aucun repas enregistré.</p>'}
+      </div>
+    `;
+
+    container.querySelector('#mealForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const name = container.querySelector('#mealName').value.trim();
+      const dtVal = container.querySelector('#mealTime').value;
+      if(!name || !dtVal) return;
+      const date = dtVal.slice(0,10), time = dtVal.slice(11,16);
+      const mk = date.slice(0,7), dk = date.slice(8,10);
+      const uid = currentUser.uid;
+      try{
+        const sameMonth = mk===fmtMonthKey(state.mealCursor);
+        const base = sameMonth ? (state.mealMonthData[dk] || {entries:[],rating:null}) : ((await getDoc(mealMonthRef(uid,mk))).data()?.[dk] || {entries:[],rating:null});
+        const updated = { entries: (base.entries||[]).concat([{name,time}]), rating: base.rating||null };
+        await setDoc(mealMonthRef(uid, mk), { [dk]: updated }, { merge:true });
+      }catch(e){ console.error(e); showToast('Sauvegarde impossible pour le moment.'); }
+      state.selectedMealDate = date;
+      if(!sameMonthCursor(state.mealCursor, date)){
+        state.mealCursor = new Date(Number(date.slice(0,4)), Number(date.slice(5,7))-1, 1);
+        reattach('meal');
+      }
+    });
+
+    container.querySelectorAll('.rate-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const uid = currentUser.uid;
+        const mk = fmtMonthKey(state.mealCursor);
+        const current = state.mealMonthData[dayKey] || {entries:[], rating:null};
+        const newRate = btn.dataset.rate;
+        const updated = { entries: current.entries||[], rating: (current.rating===newRate ? null : newRate) };
+        try{ await setDoc(mealMonthRef(uid, mk), { [dayKey]: updated }, { merge:true }); }
+        catch(e){ console.error(e); showToast('Sauvegarde impossible pour le moment.'); }
+      });
+    });
+
+    container.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('Supprimer ce repas ?')) return;
+        const idx = Number(btn.dataset.idx);
+        const uid = currentUser.uid;
+        const mk = fmtMonthKey(state.mealCursor);
+        const current = state.mealMonthData[dayKey] || {entries:[], rating:null};
+        const entries = (current.entries||[]).slice();
+        entries.splice(idx,1);
+        try{ await setDoc(mealMonthRef(uid, mk), { [dayKey]: { entries, rating: current.rating||null } }, { merge:true }); }
+        catch(e){ console.error(e); showToast('Suppression impossible pour le moment.'); }
+      });
+    });
+
+    container.querySelector('#mealPrev').addEventListener('click', ()=>{ navigateMealMonth(-1); });
+    container.querySelector('#mealNext').addEventListener('click', ()=>{ navigateMealMonth(1); });
+    container.querySelector('#mealGrid').addEventListener('click', (e)=>{
+      const cell = e.target.closest('.cal-cell[data-date]');
+      if(!cell) return;
+      state.selectedMealDate = cell.dataset.date;
+      renderMealPanel();
+    });
+  }
+
+  function navigateMealMonth(delta){
+    state.mealCursor = addMonths(state.mealCursor, delta);
+    state.selectedMealDate = firstOfMonthStr(state.mealCursor);
+    reattach('meal');
+  }
+
+  // ================= POIDS =================
+  function attachWeightListeners(){
+    const uid = currentUser.uid;
+    const q = query(weightCollRef(uid), orderBy('date'));
+    const unsub1 = onSnapshot(q, (snap)=>{
+      state.weightEntries = snap.docs.map(d=>({date:d.id, weight:d.data().weight}));
+      renderWeightPanel();
+    }, (err)=>{ console.error(err); showToast('Erreur de synchronisation (poids).'); });
+    const unsub2 = onSnapshot(goalRef(uid), (snap)=>{
+      state.weightGoal = snap.exists() ? snap.data().goal : null;
+      renderWeightPanel();
+    }, (err)=>{ console.error(err); });
+    activeUnsubs.push(unsub1, unsub2);
+  }
+
+  function filterByPeriod(entries, period){
+    const def = PERIODS.find(p=>p[0]===period);
+    if(!def || def[2]===null) return entries;
+    const cutoff = addMonths(new Date(), -def[2]);
+    const cutoffStr = fmtDate(cutoff);
+    return entries.filter(e=>e.date>=cutoffStr);
+  }
+  function computeAutoRange(entries, goal){
+    let vals = entries.map(e=>e.weight);
+    if(goal!=null) vals = vals.concat([goal]);
+    if(vals.length===0) return {min:60,max:90};
+    let mn=Math.min(...vals), mx=Math.max(...vals);
+    if(mn===mx){ mn-=2; mx+=2; }
+    const pad = Math.max(1, (mx-mn)*0.25);
+    return { min: Math.floor((mn-pad)*2)/2, max: Math.ceil((mx+pad)*2)/2 };
+  }
+  function formatDelta(current, goal){
+    const diff = current-goal;
+    if(Math.abs(diff)<0.05) return 'Atteint 🎉';
+    return (diff>0 ? '−' : '+') + Math.abs(diff).toFixed(1) + ' kg';
+  }
+  function buildWeightChartSVG(entries, range, goal){
+    const W=300, H=180, padL=32, padR=10, padT=14, padB=20;
+    const plotW=W-padL-padR, plotH=H-padT-padB;
+    if(entries.length===0){
+      return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;"><text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="11" fill="${COLORS.inkSoft}">Pas encore de données</text></svg>`;
+    }
+    const sorted = entries.slice().sort((a,b)=>a.date.localeCompare(b.date));
+    const dates = sorted.map(e=> new Date(e.date+'T00:00:00').getTime());
+    const minT = Math.min(...dates), maxT = Math.max(...dates);
+    const xScale = t => padL + (maxT===minT ? plotW/2 : (t-minT)/(maxT-minT)*plotW);
+    const yScale = v => padT + (1-(v-range.min)/(range.max-range.min))*plotH;
+
+    let gridHtml='';
+    const steps=4;
+    for(let i=0;i<=steps;i++){
+      const val = range.min + (range.max-range.min)*i/steps;
+      const y = yScale(val);
+      gridHtml += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="${COLORS.line}" stroke-width="1"/>`;
+      gridHtml += `<text x="${padL-5}" y="${(y+3).toFixed(1)}" font-size="9" text-anchor="end" fill="${COLORS.inkSoft}" font-family="IBM Plex Mono, monospace">${val.toFixed(1)}</text>`;
+    }
+    let goalHtml='';
+    if(goal!=null && goal>=range.min && goal<=range.max){
+      const gy = yScale(goal);
+      goalHtml = `<line x1="${padL}" y1="${gy.toFixed(1)}" x2="${W-padR}" y2="${gy.toFixed(1)}" stroke="${COLORS.poids}" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="${W-padR}" y="${(gy-4).toFixed(1)}" font-size="9" text-anchor="end" fill="${COLORS.poids}" font-family="IBM Plex Mono, monospace">Objectif ${goal}</text>`;
+    }
+    const pts = sorted.map(e=>{
+      const t = new Date(e.date+'T00:00:00').getTime();
+      const y = clamp(yScale(e.weight), padT, padT+plotH);
+      return `${xScale(t).toFixed(1)},${y.toFixed(1)}`;
+    });
+    const path = 'M'+pts.join(' L');
+    const circles = sorted.map(e=>{
+      const t = new Date(e.date+'T00:00:00').getTime();
+      const y = clamp(yScale(e.weight), padT, padT+plotH);
+      return `<circle cx="${xScale(t).toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${COLORS.poids}"><title>${fmtDateShort(e.date)} : ${e.weight} kg</title></circle>`;
+    }).join('');
+    const xLabels = `<text x="${padL}" y="${H-4}" font-size="9" fill="${COLORS.inkSoft}" font-family="IBM Plex Mono, monospace">${fmtDateShort(sorted[0].date)}</text>
+      <text x="${W-padR}" y="${H-4}" font-size="9" text-anchor="end" fill="${COLORS.inkSoft}" font-family="IBM Plex Mono, monospace">${fmtDateShort(sorted[sorted.length-1].date)}</text>`;
+
+    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">
+      ${gridHtml}
+      ${goalHtml}
+      <path d="${path}" fill="none" stroke="${COLORS.poids}" stroke-width="2"/>
+      ${circles}
+      ${xLabels}
+    </svg>`;
+  }
+
+  function renderWeightPanel(){
+    const container = document.getElementById('panel-poids');
+    const entries = state.weightEntries.slice().sort((a,b)=>a.date.localeCompare(b.date));
+    const goal = state.weightGoal;
+    const filtered = filterByPeriod(entries, state.weightPeriod);
+    const last = entries[entries.length-1];
+    const range = state.weightRange || computeAutoRange(filtered, goal);
+
+    container.innerHTML = `
+      <form id="weightForm">
+        <div class="field-row">
+          <div class="field"><label class="small">Date</label><input type="date" id="weightDate" value="${fmtDate(new Date())}"></div>
+          <div class="field"><label class="small">Poids (kg)</label><input type="number" id="weightVal" step="0.1" min="0" placeholder="68.5" required></div>
+        </div>
+        <button type="submit" class="primary poids">Ajouter la pesée</button>
+      </form>
+
+      <div class="field-row" style="margin-top:16px;align-items:end;">
+        <div class="field"><label class="small">Objectif (kg)</label><input type="number" id="goalVal" step="0.1" value="${goal!=null?goal:''}" placeholder="Ex: 65"></div>
+        <div class="field" style="flex:0 0 auto;"><button type="button" id="saveGoal" class="primary poids" style="width:auto;padding:9px 14px;white-space:nowrap;">Enregistrer</button></div>
+      </div>
+
+      ${last ? `
+      <div class="stat-highlight">
+        <div class="stat-box"><div class="num">${last.weight} kg</div><div class="lbl">Dernière pesée</div></div>
+        ${goal!=null ? `<div class="stat-box"><div class="num">${formatDelta(last.weight, goal)}</div><div class="lbl">Vs objectif</div></div>` : ''}
+      </div>` : ''}
+
+      <div class="period-row">
+        ${PERIODS.map(p=>`<button type="button" class="period-btn ${state.weightPeriod===p[0]?'active':''}" data-period="${p[0]}">${p[1]}</button>`).join('')}
+      </div>
+
+      <div id="weightChartWrap">${buildWeightChartSVG(filtered, range, goal)}</div>
+
+      <div class="range-row">
+        <div class="field"><label class="small">Échelle min</label><input type="number" id="rangeMin" step="0.5" value="${range.min}"></div>
+        <div class="field"><label class="small">Échelle max</label><input type="number" id="rangeMax" step="0.5" value="${range.max}"></div>
+        <div class="field" style="flex:0 0 auto;"><button type="button" id="rangeAuto" class="cal-nav" style="width:auto;padding:9px 12px;">Auto</button></div>
+      </div>
+
+      <div class="day-list">
+        <label class="small">Historique</label>
+        ${entries.length ? entries.slice().reverse().map(e=>`
+          <div class="entry-row">
+            <span class="entry-meta">${fmtDateShort(e.date)}</span>
+            <span>${e.weight} kg <button class="del-btn" data-date="${e.date}" aria-label="Supprimer">✕</button></span>
+          </div>`).join('') : '<p class="empty-note">Aucune pesée enregistrée.</p>'}
+      </div>
+    `;
+
+    container.querySelector('#weightForm').addEventListener('submit', async (ev)=>{
+      ev.preventDefault();
+      const date = container.querySelector('#weightDate').value;
+      const val = Number(container.querySelector('#weightVal').value);
+      if(!date || !val) return;
+      try{
+        await setDoc(weightEntryRef(currentUser.uid, date), { weight: val, updatedAt: serverTimestamp() });
+      }catch(e){ console.error(e); showToast('Sauvegarde impossible pour le moment.'); }
+    });
+
+    container.querySelector('#saveGoal').addEventListener('click', async ()=>{
+      const v = container.querySelector('#goalVal').value;
+      const g = v===''? null : Number(v);
+      try{ await setDoc(goalRef(currentUser.uid), { goal: g }); }
+      catch(e){ console.error(e); showToast('Sauvegarde impossible pour le moment.'); }
+    });
+
+    container.querySelectorAll('.period-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.weightPeriod = btn.dataset.period;
+        state.weightRange = null;
+        renderWeightPanel();
+      });
+    });
+
+    container.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('Supprimer cette pesée ?')) return;
+        try{ await deleteDoc(weightEntryRef(currentUser.uid, btn.dataset.date)); }
+        catch(e){ console.error(e); showToast('Suppression impossible pour le moment.'); }
+      });
+    });
+
+    const rangeMinInput = container.querySelector('#rangeMin');
+    const rangeMaxInput = container.querySelector('#rangeMax');
+    function updateChartFromInputs(){
+      const mn = parseFloat(rangeMinInput.value);
+      const mx = parseFloat(rangeMaxInput.value);
+      if(!isNaN(mn) && !isNaN(mx) && mx>mn){
+        state.weightRange = {min:mn, max:mx};
+        container.querySelector('#weightChartWrap').innerHTML = buildWeightChartSVG(filtered, state.weightRange, goal);
+      }
+    }
+    rangeMinInput.addEventListener('input', updateChartFromInputs);
+    rangeMaxInput.addEventListener('input', updateChartFromInputs);
+    container.querySelector('#rangeAuto').addEventListener('click', ()=>{
+      state.weightRange = null;
+      renderWeightPanel();
+    });
+  }
+
+  // ================= EXPORT / IMPORT (filet de sécurité indépendant de Firebase) =================
+  async function exportBackup(){
+    const uid = currentUser.uid;
+    try{
+      const bundle = { sportMonths:{}, mealMonths:{}, weightEntries:{}, goal:null };
+      const sportSnap = await getDocs(collection(db,'users',uid,'sportMonths'));
+      sportSnap.forEach(d=> bundle.sportMonths[d.id]=d.data());
+      const mealSnap = await getDocs(collection(db,'users',uid,'mealMonths'));
+      mealSnap.forEach(d=> bundle.mealMonths[d.id]=d.data());
+      const weightSnap = await getDocs(weightCollRef(uid));
+      weightSnap.forEach(d=> bundle.weightEntries[d.id]={weight:d.data().weight});
+      const goalSnap = await getDoc(goalRef(uid));
+      if(goalSnap.exists()) bundle.goal = goalSnap.data().goal;
+
+      const blob = new Blob([JSON.stringify(bundle)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `carnet-de-bord-sauvegarde-${fmtDate(new Date())}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Sauvegarde exportée.');
+    }catch(e){ console.error(e); showToast("Export impossible pour le moment."); }
+  }
+
+  async function importBackupFile(file){
+    try{
+      const text = await file.text();
+      const bundle = JSON.parse(text);
+      const uid = currentUser.uid;
+      const batch = writeBatch(db);
+      Object.entries(bundle.sportMonths||{}).forEach(([mk,data])=>{
+        batch.set(sportMonthRef(uid,mk), data, {merge:true});
+      });
+      Object.entries(bundle.mealMonths||{}).forEach(([mk,data])=>{
+        batch.set(mealMonthRef(uid,mk), data, {merge:true});
+      });
+      Object.entries(bundle.weightEntries||{}).forEach(([dateStr,data])=>{
+        batch.set(weightEntryRef(uid,dateStr), data, {merge:true});
+      });
+      if(bundle.goal!=null){ batch.set(goalRef(uid), {goal:bundle.goal}); }
+      await batch.commit();
+      showToast('Import réussi.');
+    }catch(e){
+      console.error(e);
+      showToast('Fichier de sauvegarde invalide ou import impossible.');
+    }
+  }
+
+  // ================= TABS =================
+  function bindTabs(){
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        ['sport','repas','poids'].forEach(t=>{
+          document.getElementById('panel-'+t).style.display = (t===btn.dataset.tab) ? 'block' : 'none';
+        });
+      });
+    });
+  }
+
+  // ================= LISTENER LIFECYCLE =================
+  function detachAll(){
+    activeUnsubs.forEach(u=>{ try{ u(); }catch(e){} });
+    activeUnsubs = [];
+  }
+  function reattach(which){
+    // détache uniquement ce qui doit être réabonné ; on ré-attache tout simplement à chaque
+    // changement de mois pour rester simple et robuste (peu coûteux vu le volume de données).
+    detachAll();
+    attachSportListener();
+    attachMealListener();
+    attachWeightListeners();
+  }
+
+  // ================= AUTH =================
+  document.getElementById('signInBtn').addEventListener('click', ()=>{
+    signInWithRedirect(auth, provider).catch(e=>{ console.error(e); showToast("Connexion impossible : "+e.code); });
+  });
+  document.getElementById('signOutBtn').addEventListener('click', async ()=>{
+    const email = currentUser ? currentUser.email : '';
+    if(!confirm(`Se déconnecter de ${email} ?\n\nSi tu te reconnectes avec un autre compte Google, tu verras les données de cet autre compte. Les données de "${email}" resteront intactes et t'attendront à ta prochaine connexion avec ce compte.`)) return;
+    await signOut(auth);
+  });
+
+  getRedirectResult(auth).catch(e=>{ console.error(e); showToast("Connexion impossible : "+e.code); });
+
+  onAuthStateChanged(auth, (user)=>{
+    detachAll();
+    currentUser = user;
+    const authGate = document.getElementById('authGate');
+    const tabsNav = document.getElementById('tabsNav');
+    const mainArea = document.getElementById('mainArea');
+    const backupRow = document.getElementById('backupRow');
+    const accountRow = document.getElementById('accountRow');
+
+    if(user){
+      authGate.style.display='none';
+      tabsNav.style.display='flex';
+      mainArea.style.display='block';
+      backupRow.style.display='flex';
+      accountRow.style.display='flex';
+      document.getElementById('accountEmail').textContent = user.email || user.displayName || 'Connecté';
+      attachSportListener();
+      attachMealListener();
+      attachWeightListeners();
+    } else {
+      authGate.style.display='block';
+      tabsNav.style.display='none';
+      mainArea.style.display='none';
+      backupRow.style.display='none';
+      accountRow.style.display='none';
+    }
+  });
+
+  // ================= INIT =================
+  bindTabs();
+  document.getElementById('exportBtn').addEventListener('click', exportBackup);
+  document.getElementById('importFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(file) importBackupFile(file);
+    e.target.value='';
+  });
+</script>
+</body>
+</html>
