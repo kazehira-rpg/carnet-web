@@ -896,5 +896,12 @@
     e.target.value='';
   });
 </script>
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(function(err){
+      console.error("Échec d'enregistrement du service worker", err);
+    });
+  }
+</script>
 </body>
 </html>
